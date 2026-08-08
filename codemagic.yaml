@@ -1,0 +1,20 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      vars:
+        GEMINI_API_KEY: $GEMINI_API_KEY
+    scripts:
+      - name: Generate platform folders
+        script: |
+          flutter create --platforms=android .
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build APK
+        script: |
+          flutter build apk --release --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+    artifacts:
+      - build/**/outputs/**/*.apk
