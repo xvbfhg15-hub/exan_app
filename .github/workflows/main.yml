@@ -1,4 +1,4 @@
-name: Build Flutter APK (Auto Fix v1 Embedding)
+name: Build Legacy Flutter APK
 
 on:
   push:
@@ -18,23 +18,20 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
 
-      - name: Set up Flutter
+      - name: Set up Flutter Legacy (v1 Support)
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '2.10.5'
           channel: 'stable'
 
-      - name: Auto-fix v1 embedding and Build APK
+      - name: Build APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
-          
-          # إصلاح ورفع قيود الحزم القديمة تلقائياً
-          flutter pub get || flutter pub upgrade
-          
-          # بناء الـ APK
+          flutter pub get
           flutter build apk --release
 
       - name: Upload APK Artifact
