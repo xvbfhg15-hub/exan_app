@@ -1,4 +1,4 @@
-name: Auto Fix Android v2 Embedding and Build APK
+name: Build Flutter APK (Debug Mode)
 
 on:
   push:
@@ -25,25 +25,18 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Re-generate Android Project & Build APK
+      - name: Build Debug APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
 
-          # إعادة بناء وتحديث مجلد android بملفات v2 الحديثة تلقائياً
           flutter create . --platforms=android --org com.example
-
-          # تعديل أي كلاسات قديمة إن وجدت في الكود المصدري
-          if [ -d "android/app/src/main" ]; then
-            find android/app/src/main -type f \( -name "*.kt" -o -name "*.java" \) -exec sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' {} + || true
-          fi
-
           flutter pub get
-          flutter build apk --release
+          flutter build apk --debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-apk
+          name: flutter-debug-apk
           path: '**/*.apk'
