@@ -1,4 +1,4 @@
-name: Build Flutter APK (Stable Environment)
+name: Build Flutter APK (Direct Gradle Diagnostics)
 
 on:
   push:
@@ -18,27 +18,26 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Configure Android Project & Build
+      - name: Prepare & Build APK via Gradle
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
 
-          # إعادة توليد أندرويد لضمان Android v2 Embedding
           flutter create . --platforms=android --org com.example
-
-          # إجبار Gradle على استخدام Java 17 المتوفرة في البيئة
-          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
-
           flutter pub get
-          flutter build apk --debug
+          
+          # الانتقال لمجلد أندرويد وتأكيد صلاحيات التنفيذ والتجميع المباشر
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         if: always()
