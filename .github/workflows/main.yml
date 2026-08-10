@@ -25,24 +25,20 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Patch Project to Android v2 Embedding & Build
+      - name: Re-generate Android Project & Build APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
 
-          # 1. تحديث AndroidManifest.xml بإضافة meta-data للـ v2 embedding
-          MANIFEST_FILE="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST_FILE" ]; then
-            if ! grep -q "flutterEmbedding" "$MANIFEST_FILE"; then
-              sed -i '/<\/application>/i \        <meta-data android:name="flutterEmbedding" android:value="2" />' "$MANIFEST_FILE"
-            fi
+          # إعادة بناء وتحديث مجلد android بملفات v2 الحديثة تلقائياً
+          flutter create . --platforms=android --org com.example
+
+          # تعديل أي كلاسات قديمة إن وجدت في الكود المصدري
+          if [ -d "android/app/src/main" ]; then
+            find android/app/src/main -type f \( -name "*.kt" -o -name "*.java" \) -exec sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' {} + || true
           fi
 
-          # 2. تعديل ملفات Kotlin / Java للاعتماد على v2 Embedding تلقائياً
-          find android/app/src/main -type f \( -name "*.kt" -o -name "*.java" \) -exec sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' {} +
-
-          # 3. جلب الحزم وبناء الـ APK
           flutter pub get
           flutter build apk --release
 
