@@ -1,4 +1,4 @@
-name: Build Flutter APK & Catch Error
+name: Build Flutter APK (Java 11 Stable)
 
 on:
   push:
@@ -14,18 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java Development Kit (JDK)
+      - name: Set up Java Development Kit (JDK 11)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '11'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Build APK and Catch Specific Error
+      - name: Generate Android & Build APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
@@ -34,11 +34,8 @@ jobs:
           flutter create . --platforms=android --org com.example
           flutter pub get
           
-          # تجديد ملف gradle.properties لمنع تعارضات ذاكرة جافا
-          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
-          
-          # تشغيل التجميع وتوجيه أخطاء Gradle للطباعة المباشرة
-          flutter build apk --debug --extra-front-end-options="--no-implicit-casts" || flutter build apk --debug --verbose
+          # بناء APK في وضع debug مباشرة
+          flutter build apk --debug
 
       - name: Upload APK Artifact
         if: always()
