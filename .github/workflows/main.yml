@@ -1,4 +1,4 @@
-name: Build Legacy Flutter APK
+name: Build Flutter APK (Auto Fix Manifest)
 
 on:
   push:
@@ -18,19 +18,27 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
-      - name: Set up Flutter Legacy (v1 Support)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '2.10.5'
           channel: 'stable'
 
-      - name: Build APK
+      - name: Patch Android Manifest & Build APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
+          
+          # إدخال وسم v2 embedding في AndroidManifest.xml تلقائياً لتجاوز خطأ v1
+          MANIFEST_FILE="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST_FILE" ]; then
+            if ! grep -q "flutterEmbedding" "$MANIFEST_FILE"; then
+              sed -i '/<\/application>/i \        <meta-data android:name="flutterEmbedding" android:value="2" />' "$MANIFEST_FILE"
+            fi
+          fi
+
           flutter pub get
           flutter build apk --release
 
