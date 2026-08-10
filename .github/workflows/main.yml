@@ -1,4 +1,4 @@
-name: Universal Auto-Detect Build APK
+name: Build Flutter APK (Legacy v1 Support)
 
 on:
   push:
@@ -18,59 +18,24 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Set up Flutter Framework
+      - name: Set up Compatible Flutter Version
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.10.6'
           channel: 'stable'
 
-      - name: Detect and Build Project
+      - name: Build Flutter APK
         run: |
-          # 1. البحث عن مشروع Flutter
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
-          if [ -n "$FLUTTER_PUBSPEC" ]; then
-            PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
-            echo "Detected Flutter project at: $PROJECT_DIR"
-            cd "$PROJECT_DIR"
-            flutter pub get
-            flutter build apk --release
-            exit 0
-          fi
-
-          # 2. البحث عن مشروع Node.js/Web
-          NODE_PACKAGE=$(find . -name "package.json" -not -path "*/.*" -not -path "*/node_modules/*" | head -n 1)
-          if [ -n "$NODE_PACKAGE" ]; then
-            PROJECT_DIR=$(dirname "$NODE_PACKAGE")
-            echo "Detected Node.js project at: $PROJECT_DIR"
-            cd "$PROJECT_DIR"
-            npm install
-            npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest
-            npm run build --if-present
-            
-            BUILD_DIR="dist"
-            if [ ! -d "dist" ]; then BUILD_DIR="build"; fi
-            if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
-            
-            npx cap init "MyApp" "com.example.myapp" --web-dir "$BUILD_DIR"
-            npx cap add android || true
-            cd android
-            echo "sdk.dir=$ANDROID_HOME" > local.properties
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon
-            exit 0
-          fi
-
-          echo "Error: Neither Flutter nor Node.js project files found!"
-          exit 1
+          PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
+          cd "$PROJECT_DIR"
+          flutter pub get
+          flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: flutter-apk
           path: '**/*.apk'
