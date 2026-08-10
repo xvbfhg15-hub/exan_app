@@ -1,4 +1,4 @@
-name: Build Flutter APK (Debug Mode)
+name: Build Flutter APK (Diagnose & Build)
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Debug APK
+      - name: Build Debug APK with Verbose Logs
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
@@ -33,9 +33,10 @@ jobs:
 
           flutter create . --platforms=android --org com.example
           flutter pub get
-          flutter build apk --debug
+          flutter build apk --debug --verbose
 
       - name: Upload APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flutter-debug-apk
