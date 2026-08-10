@@ -1,4 +1,4 @@
-name: Build Flutter APK (Java 11 Stable)
+name: Print Direct Gradle Error Details
 
 on:
   push:
@@ -14,18 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java Development Kit (JDK 11)
+      - name: Set up Java Development Kit (JDK)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Generate Android & Build APK
+      - name: Show Exact Gradle Failure
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
@@ -33,9 +33,14 @@ jobs:
 
           flutter create . --platforms=android --org com.example
           flutter pub get
-          
-          # بناء APK في وضع debug مباشرة
-          flutter build apk --debug
+
+          # الانتقال لمجلد أندرويد وتشغيل التجميع المباشر لعرض أصل المشكلة
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --quiet --stacktrace || true
+
+          echo "=== EXPLICIT BUILD LOG BELOW ==="
+          ./gradlew assembleDebug --info | grep -E "FAILURE|What went wrong|Exception|error" -A 10 -B 2 || true
 
       - name: Upload APK Artifact
         if: always()
