@@ -1,4 +1,4 @@
-name: Build Flutter APK (Legacy v1 Support)
+name: Build Flutter APK
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       - name: Set up Compatible Flutter Version
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.10.6'
+          flutter-version: '3.13.0'
           channel: 'stable'
 
       - name: Build Flutter APK
@@ -32,7 +32,7 @@ jobs:
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --no-sound-null-safety || flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
