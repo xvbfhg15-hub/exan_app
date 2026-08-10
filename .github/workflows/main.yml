@@ -1,4 +1,4 @@
-name: Print Direct Gradle Error Details
+name: Build and Upload Flutter APK
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java Development Kit (JDK)
+      - name: Set up Java Development Kit (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -25,26 +25,21 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Show Exact Gradle Failure
+      - name: Clean Android & Build APK
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
 
+          # مسح مجلد أندرويد القديم لتجنب تعارض v1/v2 embedding وGradle
+          rm -rf android
           flutter create . --platforms=android --org com.example
+
           flutter pub get
-
-          # الانتقال لمجلد أندرويد وتشغيل التجميع المباشر لعرض أصل المشكلة
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --quiet --stacktrace || true
-
-          echo "=== EXPLICIT BUILD LOG BELOW ==="
-          ./gradlew assembleDebug --info | grep -E "FAILURE|What went wrong|Exception|error" -A 10 -B 2 || true
+          flutter build apk --debug
 
       - name: Upload APK Artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-debug-apk
-          path: '**/*.apk'
+          name: flutter-app-debug
+          path: '**/build/app/outputs/flutter-apk/*.apk'
