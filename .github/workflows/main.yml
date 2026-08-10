@@ -1,4 +1,4 @@
-name: Build Flutter APK (Diagnose & Build)
+name: Build Flutter APK (Stable Environment)
 
 on:
   push:
@@ -25,15 +25,20 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Debug APK with Verbose Logs
+      - name: Configure Android Project & Build
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
 
+          # إعادة توليد أندرويد لضمان Android v2 Embedding
           flutter create . --platforms=android --org com.example
+
+          # إجبار Gradle على استخدام Java 17 المتوفرة في البيئة
+          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
+
           flutter pub get
-          flutter build apk --debug --verbose
+          flutter build apk --debug
 
       - name: Upload APK Artifact
         if: always()
