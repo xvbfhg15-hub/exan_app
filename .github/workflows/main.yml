@@ -1,4 +1,4 @@
-name: Build Flutter APK (Auto Fix Manifest)
+name: Auto Fix Android v2 Embedding and Build APK
 
 on:
   push:
@@ -25,13 +25,13 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Patch Android Manifest & Build APK
+      - name: Patch Project to Android v2 Embedding & Build
         run: |
           FLUTTER_PUBSPEC=$(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1)
           PROJECT_DIR=$(dirname "$FLUTTER_PUBSPEC")
           cd "$PROJECT_DIR"
-          
-          # إدخال وسم v2 embedding في AndroidManifest.xml تلقائياً لتجاوز خطأ v1
+
+          # 1. تحديث AndroidManifest.xml بإضافة meta-data للـ v2 embedding
           MANIFEST_FILE="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST_FILE" ]; then
             if ! grep -q "flutterEmbedding" "$MANIFEST_FILE"; then
@@ -39,6 +39,10 @@ jobs:
             fi
           fi
 
+          # 2. تعديل ملفات Kotlin / Java للاعتماد على v2 Embedding تلقائياً
+          find android/app/src/main -type f \( -name "*.kt" -o -name "*.java" \) -exec sed -i 's/io.flutter.app.FlutterActivity/io.flutter.embedding.android.FlutterActivity/g' {} +
+
+          # 3. جلب الحزم وبناء الـ APK
           flutter pub get
           flutter build apk --release
 
